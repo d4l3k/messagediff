@@ -24,7 +24,7 @@ type someStruct struct {
 func main() {
 			a := someStruct{1, 2, []int{1}}
 			b := someStruct{1, 3, []int{1, 2}}
-      diff, equal := messagediff.DeepDiff(a, b)
+      diff, equal := messagediff.PrettyDiff(a, b)
       /*
         diff =
           `added: .C[1] = 2
@@ -49,7 +49,7 @@ type someStruct struct {
 func TestSomething(t *testing.T) {
   want := someStruct{1, 2, []int{1}}
   got := someStruct{1, 3, []int{1, 2}}
-  if diff, equal := messagediff.DeepDiff(want, got); !equal {
+  if diff, equal := messagediff.PrettyDiff(want, got); !equal {
     t.Errorf("Something() = %#v\n%s", got, diff)
   }
 }
