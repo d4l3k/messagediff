@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// DeepDiff does a deep comparison and returns the results.
-func DeepDiff(a, b interface{}) (string, bool) {
+// PrettyDiff does a deep comparison and returns the results.
+func PrettyDiff(a, b interface{}) (string, bool) {
 	d, equal := diff(a, b, "")
 	sort.Strings(d)
 	return strings.Join(d, ""), equal

@@ -7,7 +7,7 @@ type testStruct struct {
 	C    []int
 }
 
-func TestDeepDiff(t *testing.T) {
+func TestPrettyDiff(t *testing.T) {
 	testData := []struct {
 		a, b  interface{}
 		diff  string
@@ -51,12 +51,12 @@ func TestDeepDiff(t *testing.T) {
 		},
 	}
 	for i, td := range testData {
-		diff, equal := DeepDiff(td.a, td.b)
+		diff, equal := PrettyDiff(td.a, td.b)
 		if diff != td.diff {
-			t.Errorf("%d. DeepDiff(%#v, %#v) diff = %#v; not %#v", i, td.a, td.b, diff, td.diff)
+			t.Errorf("%d. PrettyDiff(%#v, %#v) diff = %#v; not %#v", i, td.a, td.b, diff, td.diff)
 		}
 		if equal != td.equal {
-			t.Errorf("%d. DeepDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
+			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
 		}
 	}
 }

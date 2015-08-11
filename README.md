@@ -1,6 +1,9 @@
 # messagediff
 A library for doing diffs of arbitrary Golang structs.
 
+[![Build Status](https://travis-ci.org/d4l3k/messagediff.svg?branch=master)](https://travis-ci.org/d4l3k/messagediff)
+[![GoDoc](https://godoc.org/github.com/d4l3k/messagediff?status.svg)](https://godoc.org/github.com/d4l3k/messagediff)
+
 If the unsafe package is available messagediff will diff unexported fields in
 addition to exported fields. This is primarily used for testing purposes as it
 allows for providing informative error messages.
