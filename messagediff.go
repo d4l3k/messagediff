@@ -3,23 +3,27 @@ package messagediff
 import (
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 )
 
 // DeepDiff does a deep comparison and returns the results.
 func DeepDiff(a, b interface{}) (string, bool) {
-	return diff(a, b, "")
+	d, equal := diff(a, b, "")
+	sort.Strings(d)
+	return strings.Join(d, ""), equal
 }
 
-func diff(a, b interface{}, path string) (string, bool) {
+func diff(a, b interface{}, path string) ([]string, bool) {
 	aVal := reflect.ValueOf(a)
 	bVal := reflect.ValueOf(b)
 	if aVal.Type() != bVal.Type() {
-		return fmt.Sprintf("modified: %s = %#v\n", path, b), false
+		return []string{fmt.Sprintf("modified: %s = %#v\n", path, b)}, false
 	}
 	kind := aVal.Type().Kind()
 	switch kind {
 	case reflect.Array, reflect.Slice:
-		var cDiff string
+		var cDiff []string
 		aLen := aVal.Len()
 		bLen := bVal.Len()
 		for i := 0; i < min(aLen, bLen); i++ {
@@ -28,31 +32,61 @@ func diff(a, b interface{}, path string) (string, bool) {
 			if equal {
 				continue
 			}
-			cDiff += d
+			cDiff = append(cDiff, d...)
 		}
 		if aLen > bLen {
 			for i := bLen; i < aLen; i++ {
 				localPath := fmt.Sprintf("%s[%d]", path, i)
-				cDiff += fmt.Sprintf("removed: %s = %#v\n", localPath, aVal.Index(i).Interface())
+				cDiff = append(cDiff, fmt.Sprintf("removed: %s = %#v\n", localPath, aVal.Index(i).Interface()))
 			}
 		} else if aLen < bLen {
 			for i := aLen; i < bLen; i++ {
 				localPath := fmt.Sprintf("%s[%d]", path, i)
-				cDiff += fmt.Sprintf("added: %s = %#v\n", localPath, bVal.Index(i).Interface())
+				cDiff = append(cDiff, fmt.Sprintf("added: %s = %#v\n", localPath, bVal.Index(i).Interface()))
 			}
 		}
 		return cDiff, len(cDiff) == 0
 	case reflect.Map:
-		return "TODO(d4l3k): Maps", false
+		var cDiff []string
+		for _, key := range aVal.MapKeys() {
+			aI := aVal.MapIndex(key)
+			bI := bVal.MapIndex(key)
+			localPath := fmt.Sprintf("%s[%#v]", path, key.Interface())
+			if !bI.IsValid() {
+				cDiff = append(cDiff, fmt.Sprintf("removed: %s = %#v\n", localPath, aI.Interface()))
+			} else if d, equal := diff(aI.Interface(), bI.Interface(), localPath); !equal {
+				cDiff = append(cDiff, d...)
+			}
+		}
+		for _, key := range bVal.MapKeys() {
+			aI := aVal.MapIndex(key)
+			bI := bVal.MapIndex(key)
+			localPath := fmt.Sprintf("%s[%#v]", path, key.Interface())
+			if !aI.IsValid() {
+				cDiff = append(cDiff, fmt.Sprintf("added: %s = %#v\n", localPath, bI.Interface()))
+			}
+		}
+		return cDiff, len(cDiff) == 0
 	case reflect.Struct:
-		return "TODO(d4l3k): Structs", false
+		var cDiff []string
+		typ := aVal.Type()
+		for i := 0; i < typ.NumField(); i++ {
+			index := []int{i}
+			field := typ.FieldByIndex(index)
+			localPath := fmt.Sprintf("%s.%s", path, field.Name)
+			aI := unsafeReflectValue(aVal.FieldByIndex(index)).Interface()
+			bI := unsafeReflectValue(bVal.FieldByIndex(index)).Interface()
+			if d, equal := diff(aI, bI, localPath); !equal {
+				cDiff = append(cDiff, d...)
+			}
+		}
+		return cDiff, len(cDiff) == 0
 	default:
 		if reflect.DeepEqual(a, b) {
-			return "", true
+			return nil, true
 		}
-		return fmt.Sprintf("modified: %s = %#v\n", path, b), false
+		return []string{fmt.Sprintf("modified: %s = %#v\n", path, b)}, false
 	}
-
 }
 
 func min(a, b int) int {

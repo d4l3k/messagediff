@@ -2,6 +2,11 @@ package messagediff
 
 import "testing"
 
+type testStruct struct {
+	A, b int
+	C    []int
+}
+
 func TestDeepDiff(t *testing.T) {
 	testData := []struct {
 		a, b  interface{}
@@ -34,8 +39,14 @@ func TestDeepDiff(t *testing.T) {
 		},
 		{
 			map[string]int{"a": 1, "b": 2},
-			map[string]int{"b": 2, "c": 3},
-			"removed: [\"a\"] = 1\nadded: [\"c\"] = 3\n",
+			map[string]int{"b": 4, "c": 3},
+			"added: [\"c\"] = 3\nmodified: [\"b\"] = 4\nremoved: [\"a\"] = 1\n",
+			false,
+		},
+		{
+			testStruct{1, 2, []int{1}},
+			testStruct{1, 3, []int{1, 2}},
+			"added: .C[1] = 2\nmodified: .b = 3\n",
 			false,
 		},
 	}
