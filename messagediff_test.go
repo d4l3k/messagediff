@@ -60,3 +60,18 @@ func TestPrettyDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestPathString(t *testing.T) {
+	testData := []struct {
+		in   Path
+		want string
+	}{{
+		Path{StructField("test"), SliceIndex(1), MapKey{"blue"}, MapKey{12.3}},
+		".test[1][\"blue\"][12.3]",
+	}}
+	for i, td := range testData {
+		if out := td.in.String(); out != td.want {
+			t.Errorf("%d. %#v.String() = %#v; not %#v", i, td.in, out, td.want)
+		}
+	}
+}
