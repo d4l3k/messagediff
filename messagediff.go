@@ -7,86 +7,111 @@ import (
 	"strings"
 )
 
-// PrettyDiff does a deep comparison and returns the results.
+// PrettyDiff does a deep comparison and returns the nicely formated results.
 func PrettyDiff(a, b interface{}) (string, bool) {
-	d, equal := diff(a, b, "")
-	sort.Strings(d)
-	return strings.Join(d, ""), equal
+	d, equal := DeepDiff(a, b)
+	var dstr []string
+	for path, added := range d.Added {
+		dstr = append(dstr, fmt.Sprintf("added: %s = %#v\n", path.String(), added))
+	}
+	for path, added := range d.Removed {
+		dstr = append(dstr, fmt.Sprintf("removed: %s = %#v\n", path.String(), added))
+	}
+	for path, added := range d.Modified {
+		dstr = append(dstr, fmt.Sprintf("modified: %s = %#v\n", path.String(), added))
+	}
+	sort.Strings(dstr)
+	return strings.Join(dstr, ""), equal
 }
 
-func diff(a, b interface{}, path string) ([]string, bool) {
+// DeepDiff does a deep comparison and returns the results.
+func DeepDiff(a, b interface{}) (*Diff, bool) {
+	d := newdiff()
+	return d, diff(a, b, nil, d)
+}
+
+func newdiff() *Diff {
+	return &Diff{
+		Added:    make(map[*Path]interface{}),
+		Removed:  make(map[*Path]interface{}),
+		Modified: make(map[*Path]interface{}),
+	}
+}
+
+func diff(a, b interface{}, path Path, d *Diff) bool {
 	aVal := reflect.ValueOf(a)
 	bVal := reflect.ValueOf(b)
 	if aVal.Type() != bVal.Type() {
-		return []string{fmt.Sprintf("modified: %s = %#v\n", path, b)}, false
+		d.Modified[&path] = b
+		return false
 	}
 	kind := aVal.Type().Kind()
+	equal := true
 	switch kind {
 	case reflect.Array, reflect.Slice:
-		var cDiff []string
 		aLen := aVal.Len()
 		bLen := bVal.Len()
 		for i := 0; i < min(aLen, bLen); i++ {
-			localPath := fmt.Sprintf("%s[%d]", path, i)
-			d, equal := diff(aVal.Index(i).Interface(), bVal.Index(i).Interface(), localPath)
-			if equal {
-				continue
+			localPath := append(path, SliceIndex(i))
+			if eq := diff(aVal.Index(i).Interface(), bVal.Index(i).Interface(), localPath, d); !eq {
+				equal = false
 			}
-			cDiff = append(cDiff, d...)
 		}
 		if aLen > bLen {
 			for i := bLen; i < aLen; i++ {
-				localPath := fmt.Sprintf("%s[%d]", path, i)
-				cDiff = append(cDiff, fmt.Sprintf("removed: %s = %#v\n", localPath, aVal.Index(i).Interface()))
+				localPath := append(path, SliceIndex(i))
+				d.Removed[&localPath] = aVal.Index(i).Interface()
+				equal = false
 			}
 		} else if aLen < bLen {
 			for i := aLen; i < bLen; i++ {
-				localPath := fmt.Sprintf("%s[%d]", path, i)
-				cDiff = append(cDiff, fmt.Sprintf("added: %s = %#v\n", localPath, bVal.Index(i).Interface()))
+				localPath := append(path, SliceIndex(i))
+				d.Added[&localPath] = bVal.Index(i).Interface()
+				equal = false
 			}
 		}
-		return cDiff, len(cDiff) == 0
 	case reflect.Map:
-		var cDiff []string
 		for _, key := range aVal.MapKeys() {
 			aI := aVal.MapIndex(key)
 			bI := bVal.MapIndex(key)
-			localPath := fmt.Sprintf("%s[%#v]", path, key.Interface())
+			localPath := append(path, MapKey{key.Interface()})
 			if !bI.IsValid() {
-				cDiff = append(cDiff, fmt.Sprintf("removed: %s = %#v\n", localPath, aI.Interface()))
-			} else if d, equal := diff(aI.Interface(), bI.Interface(), localPath); !equal {
-				cDiff = append(cDiff, d...)
+				d.Removed[&localPath] = aI.Interface()
+				equal = false
+			} else if eq := diff(aI.Interface(), bI.Interface(), localPath, d); !eq {
+				equal = false
 			}
 		}
 		for _, key := range bVal.MapKeys() {
 			aI := aVal.MapIndex(key)
-			bI := bVal.MapIndex(key)
-			localPath := fmt.Sprintf("%s[%#v]", path, key.Interface())
 			if !aI.IsValid() {
-				cDiff = append(cDiff, fmt.Sprintf("added: %s = %#v\n", localPath, bI.Interface()))
+				bI := bVal.MapIndex(key)
+				localPath := append(path, MapKey{key.Interface()})
+				d.Added[&localPath] = bI.Interface()
+				equal = false
 			}
 		}
-		return cDiff, len(cDiff) == 0
 	case reflect.Struct:
-		var cDiff []string
 		typ := aVal.Type()
 		for i := 0; i < typ.NumField(); i++ {
 			index := []int{i}
 			field := typ.FieldByIndex(index)
-			localPath := fmt.Sprintf("%s.%s", path, field.Name)
+			localPath := append(path, StructField(field.Name))
 			aI := unsafeReflectValue(aVal.FieldByIndex(index)).Interface()
 			bI := unsafeReflectValue(bVal.FieldByIndex(index)).Interface()
-			if d, equal := diff(aI, bI, localPath); !equal {
-				cDiff = append(cDiff, d...)
+			if eq := diff(aI, bI, localPath, d); !eq {
+				equal = false
 			}
 		}
-		return cDiff, len(cDiff) == 0
 	default:
 		if reflect.DeepEqual(a, b) {
-			return nil, true
+			equal = true
+		} else {
+			d.Modified[&path] = b
+			equal = false
 		}
-		return []string{fmt.Sprintf("modified: %s = %#v\n", path, b)}, false
 	}
+	return equal
 }
 
 func min(a, b int) int {
@@ -94,4 +119,48 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// Diff represents a change in a struct.
+type Diff struct {
+	Added, Removed, Modified map[*Path]interface{}
+}
+
+// Path represents a path to a changed datum.
+type Path []PathNode
+
+func (p Path) String() string {
+	var out string
+	for _, n := range p {
+		out += n.String()
+	}
+	return out
+}
+
+// PathNode represents one step in the path.
+type PathNode interface {
+	String() string
+}
+
+// StructField is a path element representing a field of a struct.
+type StructField string
+
+func (n StructField) String() string {
+	return fmt.Sprintf(".%s", string(n))
+}
+
+// MapKey is a path element representing a key of a map.
+type MapKey struct {
+	Key interface{}
+}
+
+func (n MapKey) String() string {
+	return fmt.Sprintf("[%#v]", n.Key)
+}
+
+// SliceIndex is a path element representing a index of a slice.
+type SliceIndex int
+
+func (n SliceIndex) String() string {
+	return fmt.Sprintf("[%d]", n)
 }

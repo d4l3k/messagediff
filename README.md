@@ -55,6 +55,8 @@ func TestSomething(t *testing.T) {
 }
 ```
 
+See the `DeepDiff` function for using the diff results programmatically.
+
 ## Copyright
 Copyright (c) 2015 Tristan Rice <rice@fn.lc>
 

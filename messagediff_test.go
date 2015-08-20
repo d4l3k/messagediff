@@ -38,6 +38,12 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 		{
+			[]int{0},
+			[]int{1},
+			"modified: [0] = 1\n",
+			false,
+		},
+		{
 			map[string]int{"a": 1, "b": 2},
 			map[string]int{"b": 4, "c": 3},
 			"added: [\"c\"] = 3\nmodified: [\"b\"] = 4\nremoved: [\"a\"] = 1\n",
@@ -57,6 +63,21 @@ func TestPrettyDiff(t *testing.T) {
 		}
 		if equal != td.equal {
 			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
+		}
+	}
+}
+
+func TestPathString(t *testing.T) {
+	testData := []struct {
+		in   Path
+		want string
+	}{{
+		Path{StructField("test"), SliceIndex(1), MapKey{"blue"}, MapKey{12.3}},
+		".test[1][\"blue\"][12.3]",
+	}}
+	for i, td := range testData {
+		if out := td.in.String(); out != td.want {
+			t.Errorf("%d. %#v.String() = %#v; not %#v", i, td.in, out, td.want)
 		}
 	}
 }
