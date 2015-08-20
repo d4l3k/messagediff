@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// PrettyDiff does a deep comaprison and returns the nicely formated results.
+// PrettyDiff does a deep comparison and returns the nicely formated results.
 func PrettyDiff(a, b interface{}) (string, bool) {
 	d, equal := DeepDiff(a, b)
 	var dstr []string
