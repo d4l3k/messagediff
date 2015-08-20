@@ -38,6 +38,12 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 		{
+			[]int{0},
+			[]int{1},
+			"modified: [0] = 1\n",
+			false,
+		},
+		{
 			map[string]int{"a": 1, "b": 2},
 			map[string]int{"b": 4, "c": 3},
 			"added: [\"c\"] = 3\nmodified: [\"b\"] = 4\nremoved: [\"a\"] = 1\n",
