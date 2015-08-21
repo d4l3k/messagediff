@@ -103,6 +103,8 @@ func diff(a, b interface{}, path Path, d *Diff) bool {
 				equal = false
 			}
 		}
+	case reflect.Ptr:
+		equal = diff(aVal.Elem().Interface(), bVal.Elem().Interface(), path, d)
 	default:
 		if reflect.DeepEqual(a, b) {
 			equal = true
