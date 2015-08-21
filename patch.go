@@ -5,44 +5,48 @@ import (
 	"reflect"
 )
 
-var errPtrRequired = errors.New("can only patch referenced types (pointers)")
+var (
+	errPtrRequired     = errors.New("can only patch referenced types (pointers)")
+	errUnknownPathNode = errors.New("unknown PathNode in Path")
+)
 
 // Patch applies a diff to a struct.
-func Patch(a interface{}, diff *Diff) (interface{}, error) {
+func Patch(a interface{}, diff *Diff) error {
 	if reflect.TypeOf(a).Kind() != reflect.Ptr {
-		return nil, errPtrRequired
+		return errPtrRequired
 	}
-	var err error
+	v := reflect.ValueOf(a).Elem()
 	for path, insert := range diff.Added {
-		if a, err = addMod(a, *path, insert); err != nil {
-			return nil, err
+		if err := addMod(v, *path, insert); err != nil {
+			return err
 		}
 	}
 	for path, mod := range diff.Modified {
-		if a, err = addMod(a, *path, mod); err != nil {
-			return nil, err
+		if err := addMod(v, *path, mod); err != nil {
+			return err
 		}
 	}
 	for path, mod := range diff.Removed {
-		if a, err = rem(a, *path, mod); err != nil {
-			return nil, err
+		if err := rem(v, *path, mod); err != nil {
+			return err
 		}
 	}
-	return a, nil
+	return nil
 }
 
-func addMod(a interface{}, path Path, change interface{}) (interface{}, error) {
+func addMod(v reflect.Value, path Path, change interface{}) error {
 	cv := reflect.ValueOf(change)
-	v := reflect.ValueOf(a).Elem()
 	for i, n := range path {
 		isLast := i == len(path)-1
 		switch np := n.(type) {
 		case SliceIndex:
 			si := int(np)
 			if isLast {
-				if v.Len() < si+1 {
+				// Grow length if necessary
+				nlen := si + 1
+				if v.Len() < nlen {
 					zero := reflect.Zero(cv.Type())
-					for j := 0; j <= si+1-v.Len(); j++ {
+					for j := 0; j <= nlen-v.Len(); j++ {
 						v.Set(reflect.Append(v, zero))
 					}
 				}
@@ -66,14 +70,13 @@ func addMod(a interface{}, path Path, change interface{}) (interface{}, error) {
 				v.Set(cv)
 			}
 		default:
-			panic("unknown StructField")
+			return errUnknownPathNode
 		}
 	}
-	return a, nil
+	return nil
 }
 
-func rem(a interface{}, path Path, change interface{}) (interface{}, error) {
-	v := reflect.ValueOf(a).Elem()
+func rem(v reflect.Value, path Path, change interface{}) error {
 	for i, n := range path {
 		isLast := i == len(path)-1
 		switch np := n.(type) {
@@ -101,7 +104,9 @@ func rem(a interface{}, path Path, change interface{}) (interface{}, error) {
 			if isLast {
 				v.Set(reflect.Zero(v.Type()))
 			}
+		default:
+			return errUnknownPathNode
 		}
 	}
-	return a, nil
+	return nil
 }

@@ -9,7 +9,7 @@ addition to exported fields. This is primarily used for testing purposes as it
 allows for providing informative error messages.
 
 
-## Example Usage
+## Example Diff Usage
 In a normal file:
 ```go
 package main
@@ -56,6 +56,31 @@ func TestSomething(t *testing.T) {
 ```
 
 See the `DeepDiff` function for using the diff results programmatically.
+
+## Example Patch Usage
+```go
+package main
+
+import "github.com/d4l3k/messagediff"
+
+type someStruct struct {
+  A, b int
+  C []int
+}
+
+func main() {
+			a := someStruct{1, 2, []int{1}}
+			b := someStruct{1, 3, []int{1, 2}}
+
+      // Diff the two structs.
+      diff, _ := messagediff.DeepDiff(a, b)
+
+      // Apply changes to a
+      err := Patch(&a, diff)
+
+      // reflect.DeepDiff(a, b) == true
+}
+```
 
 ## Copyright
 Copyright (c) 2015 Tristan Rice <rice@fn.lc>

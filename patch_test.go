@@ -38,12 +38,11 @@ func TestPatch(t *testing.T) {
 		if equal {
 			t.Errorf("%d. DeepDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, false)
 		}
-		out, err := Patch(td.a, diff)
-		if err != nil {
+		if err := Patch(td.a, diff); err != nil {
 			t.Errorf("%d. Patch(%#v, diff) errored %s", i, td.a, err)
 		}
-		if d, eq := PrettyDiff(td.b, out); !eq {
-			t.Errorf("%d. Patch(%#v, diff) = %#v; diff %s", i, td.a, out, d)
+		if d, eq := PrettyDiff(td.b, td.a); !eq {
+			t.Errorf("%d. Patch(%#v, diff) = %#v; diff %s", i, td.a, td.a, d)
 		}
 	}
 }
