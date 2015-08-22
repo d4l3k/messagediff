@@ -1,6 +1,9 @@
 package messagediff
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 type testStruct struct {
 	A, b int
@@ -84,6 +87,44 @@ func TestPathString(t *testing.T) {
 	for i, td := range testData {
 		if out := td.in.String(); out != td.want {
 			t.Errorf("%d. %#v.String() = %#v; not %#v", i, td.in, out, td.want)
+		}
+	}
+}
+
+func TestNil(t *testing.T) {
+	testData := []struct {
+		a, b  interface{}
+		equal bool
+	}{
+		{
+			nil,
+			nil,
+			true,
+		},
+		{
+			&time.Time{},
+			nil,
+			false,
+		},
+		{
+			time.Time{},
+			time.Time{},
+			true,
+		},
+		{
+			time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+			time.Time{},
+			false,
+		},
+	}
+	for i, td := range testData {
+		_, equal := PrettyDiff(td.a, td.b)
+		if equal != td.equal {
+			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
+		}
+		_, equal = PrettyDiff(td.b, td.a)
+		if equal != td.equal {
+			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.b, td.a, equal, td.equal)
 		}
 	}
 }

@@ -41,6 +41,15 @@ func newdiff() *Diff {
 func diff(a, b interface{}, path Path, d *Diff) bool {
 	aVal := reflect.ValueOf(a)
 	bVal := reflect.ValueOf(b)
+	if !aVal.IsValid() && !bVal.IsValid() {
+		// Both are nil.
+		return true
+	}
+	if !aVal.IsValid() || !bVal.IsValid() {
+		// One is nil and the other isn't.
+		d.Modified[&path] = b
+		return false
+	}
 	if aVal.Type() != bVal.Type() {
 		d.Modified[&path] = b
 		return false
@@ -104,7 +113,18 @@ func diff(a, b interface{}, path Path, d *Diff) bool {
 			}
 		}
 	case reflect.Ptr:
-		equal = diff(aVal.Elem().Interface(), bVal.Elem().Interface(), path, d)
+		aVal = aVal.Elem()
+		bVal = bVal.Elem()
+		if !aVal.IsValid() && !bVal.IsValid() {
+			// Both are nil.
+			equal = true
+		} else if !aVal.IsValid() || !bVal.IsValid() {
+			// One is nil and the other isn't.
+			d.Modified[&path] = b
+			equal = false
+		} else {
+			equal = diff(aVal.Interface(), bVal.Interface(), path, d)
+		}
 	default:
 		if reflect.DeepEqual(a, b) {
 			equal = true
