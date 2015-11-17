@@ -1,6 +1,9 @@
 package messagediff
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 type testStruct struct {
 	A, b int
@@ -59,6 +62,30 @@ func TestPrettyDiff(t *testing.T) {
 			testStruct{1, 2, []int{1}},
 			testStruct{1, 3, []int{1, 2}},
 			"added: .C[1] = 2\nmodified: .b = 3\n",
+			false,
+		},
+		{
+			nil,
+			nil,
+			"",
+			true,
+		},
+		{
+			&time.Time{},
+			nil,
+			"modified:  = <nil>\n",
+			false,
+		},
+		{
+			time.Time{},
+			time.Time{},
+			"",
+			true,
+		},
+		{
+			time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+			time.Time{},
+			"modified: .loc = (*time.Location)(nil)\nmodified: .sec = 0\n",
 			false,
 		},
 	}
