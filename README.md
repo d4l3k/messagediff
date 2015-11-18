@@ -57,8 +57,8 @@ func TestSomething(t *testing.T) {
 
 See the `DeepDiff` function for using the diff results programmatically.
 
-## Copyright
-Copyright (c) 2015 Tristan Rice <rice@fn.lc>
+## License
+Copyright (c) 2015 [Tristan Rice](https://fn.lc) <rice@fn.lc>
 
 messagediff is licensed under the MIT license. See the LICENSE file for more information.
 
