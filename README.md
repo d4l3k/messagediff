@@ -12,7 +12,7 @@ In a normal file:
 ```go
 package main
 
-import "github.com/d4l3k/messagediff"
+import "gopkg.in/d4l3k/messagediff.v1"
 
 type someStruct struct {
   A, b int
@@ -35,7 +35,7 @@ func main() {
 ```
 In a test:
 ```go
-import "github.com/d4l3k/messagediff"
+import "gopkg.in/d4l3k/messagediff.v1"
 
 ...
 
