@@ -10,12 +10,43 @@ type testStruct struct {
 	C    []int
 }
 
+type RecursiveStruct struct {
+	Key   int
+	Child *RecursiveStruct
+}
+
+func newRecursiveStruct(key int) *RecursiveStruct {
+	a := &RecursiveStruct{
+		Key: key,
+	}
+	b := &RecursiveStruct{
+		Key:   key,
+		Child: a,
+	}
+	a.Child = b
+	return a
+}
+
+type testCase struct {
+	a, b  interface{}
+	diff  string
+	equal bool
+}
+
+func checkTestCases(t *testing.T, testData []testCase) {
+	for i, td := range testData {
+		diff, equal := PrettyDiff(td.a, td.b)
+		if diff != td.diff {
+			t.Errorf("%d. PrettyDiff(%#v, %#v) diff = %#v; not %#v", i, td.a, td.b, diff, td.diff)
+		}
+		if equal != td.equal {
+			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
+		}
+	}
+}
+
 func TestPrettyDiff(t *testing.T) {
-	testData := []struct {
-		a, b  interface{}
-		diff  string
-		equal bool
-	}{
+	testData := []testCase{
 		{
 			true,
 			false,
@@ -77,6 +108,12 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 		{
+			nil,
+			&time.Time{},
+			"modified:  = &time.Time{sec:0, nsec:0, loc:(*time.Location)(nil)}\n",
+			false,
+		},
+		{
 			time.Time{},
 			time.Time{},
 			"",
@@ -89,15 +126,25 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 	}
-	for i, td := range testData {
-		diff, equal := PrettyDiff(td.a, td.b)
-		if diff != td.diff {
-			t.Errorf("%d. PrettyDiff(%#v, %#v) diff = %#v; not %#v", i, td.a, td.b, diff, td.diff)
-		}
-		if equal != td.equal {
-			t.Errorf("%d. PrettyDiff(%#v, %#v) equal = %#v; not %#v", i, td.a, td.b, equal, td.equal)
-		}
+	checkTestCases(t, testData)
+}
+
+func TestPrettyDiffRecursive(t *testing.T) {
+	testData := []testCase{
+		{
+			newRecursiveStruct(1),
+			newRecursiveStruct(1),
+			"",
+			true,
+		},
+		{
+			newRecursiveStruct(1),
+			newRecursiveStruct(2),
+			"modified: .Child.Key = 2\nmodified: .Key = 2\n",
+			false,
+		},
 	}
+	checkTestCases(t, testData)
 }
 
 func TestPathString(t *testing.T) {
