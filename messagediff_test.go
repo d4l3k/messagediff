@@ -102,15 +102,15 @@ func TestPrettyDiff(t *testing.T) {
 			true,
 		},
 		{
-			&time.Time{},
+			&struct{}{},
 			nil,
 			"modified:  = <nil>\n",
 			false,
 		},
 		{
 			nil,
-			&time.Time{},
-			"modified:  = &time.Time{sec:0, nsec:0, loc:(*time.Location)(nil)}\n",
+			&struct{}{},
+			"modified:  = &struct {}{}\n",
 			false,
 		},
 		{
