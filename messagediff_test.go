@@ -8,6 +8,7 @@ import (
 type testStruct struct {
 	A, b int
 	C    []int
+	D    [3]int
 }
 
 type RecursiveStruct struct {
@@ -90,8 +91,8 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 		{
-			testStruct{1, 2, []int{1}},
-			testStruct{1, 3, []int{1, 2}},
+			testStruct{1, 2, []int{1}, [3]int{4, 5, 6}},
+			testStruct{1, 3, []int{1, 2}, [3]int{4, 5, 6}},
 			"added: .C[1] = 2\nmodified: .b = 3\n",
 			false,
 		},
