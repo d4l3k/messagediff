@@ -91,7 +91,7 @@ func (d *Diff) diff(aVal, bVal reflect.Value, path Path) bool {
 
 	equal := true
 	switch kind {
-	case reflect.Array, reflect.Map, reflect.Ptr, reflect.Func, reflect.Chan, reflect.Slice:
+	case reflect.Map, reflect.Ptr, reflect.Func, reflect.Chan, reflect.Slice:
 		if aVal.IsNil() && bVal.IsNil() {
 			return true
 		}
