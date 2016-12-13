@@ -122,8 +122,8 @@ func TestPrettyDiff(t *testing.T) {
 		},
 		{
 			time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
-			time.Time{},
-			"modified: .loc = (*time.Location)(nil)\nmodified: .sec = 0\n",
+			time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
+			"modified: .sec = 0\n",
 			false,
 		},
 	}
