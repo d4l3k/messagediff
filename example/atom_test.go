@@ -13,7 +13,7 @@ func ExampleAtom() {
 	want := data1()
 	diff, equal := messagediff.PrettyDiff(want, got)
 	fmt.Printf("%v %s", equal, diff)
-	// Output: false modified: [0].FirstChild.NextSibling.Attr = " baz"
+	// Output: false modified: [0].FirstChild.NextSibling.Data = " baz"
 }
 
 func data1() []*html.Node {
