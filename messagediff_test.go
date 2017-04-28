@@ -3,6 +3,8 @@ package messagediff
 import (
 	"testing"
 	"time"
+
+	"github.com/d4l3k/messagediff/testdata"
 )
 
 type testStruct struct {
@@ -121,9 +123,9 @@ func TestPrettyDiff(t *testing.T) {
 			true,
 		},
 		{
-			time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
-			time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
-			"modified: .sec = 0\n",
+			testdata.MakeTest(10, "duck"),
+			testdata.MakeTest(20, "foo"),
+			"modified: .a = 20\nmodified: .b = \"foo\"\n",
 			false,
 		},
 	}
