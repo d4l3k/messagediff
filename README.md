@@ -6,6 +6,9 @@ If the unsafe package is available messagediff will diff unexported fields in
 addition to exported fields. This is primarily used for testing purposes as it
 allows for providing informative error messages.
 
+Optionally, fields in structs can be tagged as `testdiff:"ignore"` to make
+messagediff skip it when doing the comparison.
+
 
 ## Example Usage
 In a normal file:
@@ -17,11 +20,12 @@ import "gopkg.in/d4l3k/messagediff.v1"
 type someStruct struct {
   A, b int
   C []int
+  D int `testdiff:"ignore"`
 }
 
 func main() {
-			a := someStruct{1, 2, []int{1}}
-			b := someStruct{1, 3, []int{1, 2}}
+			a := someStruct{1, 2, []int{1}, 9}
+			b := someStruct{1, 3, []int{1, 2}, 10}
       diff, equal := messagediff.PrettyDiff(a, b)
       /*
         diff =
