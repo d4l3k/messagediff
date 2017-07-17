@@ -11,7 +11,6 @@ type testStruct struct {
 	A, b int
 	C    []int
 	D    [3]int
-	E    int `testdiff:"ignore"`
 }
 
 type RecursiveStruct struct {
@@ -94,8 +93,8 @@ func TestPrettyDiff(t *testing.T) {
 			false,
 		},
 		{
-			testStruct{1, 2, []int{1}, [3]int{4, 5, 6}, 9},
-			testStruct{1, 3, []int{1, 2}, [3]int{4, 5, 6}, 10},
+			testStruct{1, 2, []int{1}, [3]int{4, 5, 6}},
+			testStruct{1, 3, []int{1, 2}, [3]int{4, 5, 6}},
 			"added: .C[1] = 2\nmodified: .b = 3\n",
 			false,
 		},
@@ -163,5 +162,32 @@ func TestPathString(t *testing.T) {
 		if out := td.in.String(); out != td.want {
 			t.Errorf("%d. %#v.String() = %#v; not %#v", i, td.in, out, td.want)
 		}
+	}
+}
+
+type ignoreStruct struct {
+	A int `testdiff:"ignore"`
+	a int
+	B [3]int `testdiff:"ignore"`
+	b [3]int
+}
+
+func TestIgnoreTag(t *testing.T) {
+	s1 := ignoreStruct{1, 1, [3]int{1, 2, 3}, [3]int{4, 5, 6}}
+	s2 := ignoreStruct{2, 1, [3]int{1, 8, 3}, [3]int{4, 5, 6}}
+
+	diff, equal := PrettyDiff(s1, s2)
+	if !equal {
+		t.Errorf("Expected structs to be equal. Diff:\n%s", diff)
+	}
+
+	s2 = ignoreStruct{2, 2, [3]int{1, 8, 3}, [3]int{4, 9, 6}}
+	diff, equal = PrettyDiff(s1, s2)
+	if equal {
+		t.Errorf("Expected structs NOT to be equal.")
+	}
+	expect := "modified: .a = 2\nmodified: .b[1] = 9\n"
+	if diff != expect {
+		t.Errorf("Expected diff to be:\n%v\nbut got:\n%v", expect, diff)
 	}
 }
