@@ -20,12 +20,11 @@ import "gopkg.in/d4l3k/messagediff.v1"
 type someStruct struct {
   A, b int
   C []int
-  D int `testdiff:"ignore"`
 }
 
 func main() {
-			a := someStruct{1, 2, []int{1}, 9}
-			b := someStruct{1, 3, []int{1, 2}, 10}
+			a := someStruct{1, 2, []int{1}}
+			b := someStruct{1, 3, []int{1, 2}}
       diff, equal := messagediff.PrettyDiff(a, b)
       /*
         diff =
@@ -54,6 +53,28 @@ func TestSomething(t *testing.T) {
   if diff, equal := messagediff.PrettyDiff(want, got); !equal {
     t.Errorf("Something() = %#v\n%s", got, diff)
   }
+}
+```
+To ignore a field in a struct, just annotate it with testdiff:"ignore" like
+this:
+```go
+package main
+
+import "gopkg.in/d4l3k/messagediff.v1"
+
+type someStruct struct {
+  A int
+  B int `testdiff:"ignore"`
+}
+
+func main() {
+			a := someStruct{1, 2}
+			b := someStruct{1, 3}
+      diff, equal := messagediff.PrettyDiff(a, b)
+      /*
+        equal = true
+        diff = ""
+      */
 }
 ```
 
