@@ -18,21 +18,21 @@ package main
 import "gopkg.in/d4l3k/messagediff.v1"
 
 type someStruct struct {
-  A, b int
-  C []int
+    A, b int
+    C []int
 }
 
 func main() {
-			a := someStruct{1, 2, []int{1}}
-			b := someStruct{1, 3, []int{1, 2}}
-      diff, equal := messagediff.PrettyDiff(a, b)
-      /*
+    a := someStruct{1, 2, []int{1}}
+    b := someStruct{1, 3, []int{1, 2}}
+    diff, equal := messagediff.PrettyDiff(a, b)
+    /*
         diff =
-          `added: .C[1] = 2
-          modified: .b = 3`
+        `added: .C[1] = 2
+        modified: .b = 3`
 
         equal = false
-      */
+    */
 }
 
 ```
@@ -43,16 +43,16 @@ import "gopkg.in/d4l3k/messagediff.v1"
 ...
 
 type someStruct struct {
-  A, b int
-  C []int
+    A, b int
+    C []int
 }
 
 func TestSomething(t *testing.T) {
-  want := someStruct{1, 2, []int{1}}
-  got := someStruct{1, 3, []int{1, 2}}
-  if diff, equal := messagediff.PrettyDiff(want, got); !equal {
-    t.Errorf("Something() = %#v\n%s", got, diff)
-  }
+    want := someStruct{1, 2, []int{1}}
+    got := someStruct{1, 3, []int{1, 2}}
+    if diff, equal := messagediff.PrettyDiff(want, got); !equal {
+        t.Errorf("Something() = %#v\n%s", got, diff)
+    }
 }
 ```
 To ignore a field in a struct, just annotate it with testdiff:"ignore" like
@@ -63,18 +63,18 @@ package main
 import "gopkg.in/d4l3k/messagediff.v1"
 
 type someStruct struct {
-  A int
-  B int `testdiff:"ignore"`
+    A int
+    B int `testdiff:"ignore"`
 }
 
 func main() {
-			a := someStruct{1, 2}
-			b := someStruct{1, 3}
-      diff, equal := messagediff.PrettyDiff(a, b)
-      /*
+    a := someStruct{1, 2}
+    b := someStruct{1, 3}
+    diff, equal := messagediff.PrettyDiff(a, b)
+    /*
         equal = true
         diff = ""
-      */
+    */
 }
 ```
 
