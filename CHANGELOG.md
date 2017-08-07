@@ -1,3 +1,6 @@
+## nightly
+* Added support for ignoring fields.
+
 ## v1.1.0
 
 * Added support for recursive data structures.

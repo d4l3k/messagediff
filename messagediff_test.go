@@ -164,3 +164,30 @@ func TestPathString(t *testing.T) {
 		}
 	}
 }
+
+type ignoreStruct struct {
+	A int `testdiff:"ignore"`
+	a int
+	B [3]int `testdiff:"ignore"`
+	b [3]int
+}
+
+func TestIgnoreTag(t *testing.T) {
+	s1 := ignoreStruct{1, 1, [3]int{1, 2, 3}, [3]int{4, 5, 6}}
+	s2 := ignoreStruct{2, 1, [3]int{1, 8, 3}, [3]int{4, 5, 6}}
+
+	diff, equal := PrettyDiff(s1, s2)
+	if !equal {
+		t.Errorf("Expected structs to be equal. Diff:\n%s", diff)
+	}
+
+	s2 = ignoreStruct{2, 2, [3]int{1, 8, 3}, [3]int{4, 9, 6}}
+	diff, equal = PrettyDiff(s1, s2)
+	if equal {
+		t.Errorf("Expected structs NOT to be equal.")
+	}
+	expect := "modified: .a = 2\nmodified: .b[1] = 9\n"
+	if diff != expect {
+		t.Errorf("Expected diff to be:\n%v\nbut got:\n%v", expect, diff)
+	}
+}
