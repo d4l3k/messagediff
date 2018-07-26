@@ -128,6 +128,18 @@ func TestPrettyDiff(t *testing.T) {
 			"modified: .a = 20\nmodified: .b = \"foo\"\n",
 			false,
 		},
+		{
+			time.Date(2018, 7, 24, 14, 06, 59, 0, &time.Location{}),
+			time.Date(2018, 7, 24, 14, 06, 59, 0, time.UTC),
+			"",
+			true,
+		},
+		{
+			time.Date(2017, 1, 1, 0, 0, 0, 0, &time.Location{}),
+			time.Date(2018, 7, 24, 14, 06, 59, 0, time.UTC),
+			"modified:  = \"2018-07-24 14:06:59 +0000 UTC\"\n",
+			false,
+		},
 	}
 	checkTestCases(t, testData)
 }
