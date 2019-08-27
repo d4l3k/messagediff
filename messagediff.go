@@ -3,10 +3,11 @@ package messagediff
 import (
 	"fmt"
 	"reflect"
-	"sort"
 	"strings"
 	"time"
 	"unsafe"
+
+	"github.com/d4l3k/messagediff/internal/natsort"
 )
 
 // PrettyDiff does a deep comparison and returns the nicely formated results.
@@ -23,7 +24,7 @@ func PrettyDiff(a, b interface{}, options ...Option) (string, bool) {
 	for path, modified := range d.Modified {
 		dstr = append(dstr, fmt.Sprintf("modified: %s = %#v\n", path.String(), modified))
 	}
-	sort.Strings(dstr)
+	natsort.Strings(dstr)
 	return strings.Join(dstr, ""), equal
 }
 
