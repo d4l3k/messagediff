@@ -22,7 +22,7 @@ func PrettyDiff(a, b interface{}, options ...Option) (string, bool) {
 		dstr = append(dstr, fmt.Sprintf("removed: %s = %#v\n", path.String(), removed))
 	}
 	for path, modified := range d.Modified {
-		dstr = append(dstr, fmt.Sprintf("modified: %s = %#v\n", path.String(), modified))
+		dstr = append(dstr, fmt.Sprintf("modified: %s = %#v\n", path.String(), modified.New))
 	}
 	natsort.Strings(dstr)
 	return strings.Join(dstr, ""), equal
@@ -43,9 +43,15 @@ func newDiff() *Diff {
 	return &Diff{
 		Added:    make(map[*Path]interface{}),
 		Removed:  make(map[*Path]interface{}),
-		Modified: make(map[*Path]interface{}),
+		Modified: make(map[*Path]Update),
 		visited:  make(map[visit]bool),
 	}
+}
+
+// Update records the old and new value of a modified field.
+type Update struct {
+	Old interface{}
+	New interface{}
 }
 
 func (d *Diff) diff(aVal, bVal reflect.Value, path Path, opts *opts) bool {
@@ -59,15 +65,15 @@ func (d *Diff) diff(aVal, bVal reflect.Value, path Path, opts *opts) bool {
 		return true
 	}
 	if !bVal.IsValid() {
-		d.Modified[&localPath] = nil
+		d.Modified[&localPath] = Update{Old: aVal.Interface(), New: nil}
 		return false
 	} else if !aVal.IsValid() {
-		d.Modified[&localPath] = bVal.Interface()
+		d.Modified[&localPath] = Update{Old: nil, New: bVal.Interface()}
 		return false
 	}
 
 	if aVal.Type() != bVal.Type() {
-		d.Modified[&localPath] = bVal.Interface()
+		d.Modified[&localPath] = Update{Old: aVal.Interface(), New: bVal.Interface()}
 		return false
 	}
 	kind := aVal.Kind()
@@ -109,7 +115,7 @@ func (d *Diff) diff(aVal, bVal reflect.Value, path Path, opts *opts) bool {
 			return true
 		}
 		if aVal.IsNil() || bVal.IsNil() {
-			d.Modified[&localPath] = bVal.Interface()
+			d.Modified[&localPath] = Update{Old: aVal.Interface(), New: bVal.Interface()}
 			return false
 		}
 	}
@@ -165,7 +171,7 @@ func (d *Diff) diff(aVal, bVal reflect.Value, path Path, opts *opts) bool {
 			aTime := aVal.Interface().(time.Time)
 			bTime := bVal.Interface().(time.Time)
 			if !aTime.Equal(bTime) {
-				d.Modified[&localPath] = bVal.Interface().(time.Time).String()
+				d.Modified[&localPath] = Update{Old: aTime.String(), New: bTime.String()}
 				equal = false
 			}
 		} else {
@@ -192,7 +198,7 @@ func (d *Diff) diff(aVal, bVal reflect.Value, path Path, opts *opts) bool {
 		if reflect.DeepEqual(aVal.Interface(), bVal.Interface()) {
 			equal = true
 		} else {
-			d.Modified[&localPath] = bVal.Interface()
+			d.Modified[&localPath] = Update{Old: aVal.Interface(), New: bVal.Interface()}
 			equal = false
 		}
 	}
@@ -219,8 +225,9 @@ type visit struct {
 
 // Diff represents a change in a struct.
 type Diff struct {
-	Added, Removed, Modified map[*Path]interface{}
-	visited                  map[visit]bool
+	Added, Removed map[*Path]interface{}
+	Modified       map[*Path]Update
+	visited        map[visit]bool
 }
 
 // Path represents a path to a changed datum.
