@@ -1,11 +1,17 @@
 language: go
 
+arch:
+  - AMD64
+  - ppc64le
+
+go_import_path: github.com/d4l3k/messagediff
+
 os:
   - linux
 
 go:
-  - 1.9.x
-  - 1.10.x
+  - 1.14.x
+  - 1.15.x
   - tip
 
 allow_failures:
